@@ -10,25 +10,95 @@
 </head>
 <body>
 <main>
-  <h1>OAuth callbacks</h1>
-  <p class="muted">Internal OAuth landing pages for huangmadsen.com.</p>
+  <h1>Authorize</h1>
+  <p class="muted">Tap a service to start the OAuth flow. Bookmark this page for re-auth.</p>
 
-  <div class="status">
-    <strong>This page is a directory.</strong> OAuth providers should redirect to a service-specific path:
-  </div>
+  <div id="services"></div>
 
-  <ul style="list-style: none; padding: 0;">
-    <li style="padding: 12px 16px; border: 1px solid #2a2a2a; border-radius: 12px; margin-bottom: 8px;">
-      <strong>Schwab:</strong> <code style="color: #2a7fff;">/schwab</code>
-    </li>
-    <li style="padding: 12px 16px; border: 1px solid #2a2a2a; border-radius: 12px; margin-bottom: 8px;">
-      <strong>Strava:</strong> <code style="color: #2a7fff;">/strava</code>
-    </li>
-  </ul>
+  <details>
+    <summary>How this works</summary>
+    <p>
+      Each button opens the provider's authorization page. After you approve, the provider
+      redirects to a callback page on this site that captures the code as a JSON payload
+      for the agent to exchange. Add this page to your phone home screen for one-tap re-auth.
+    </p>
+  </details>
 
   <footer>
     <a href="https://github.com/kmadsen/oauth-pages">github.com/kmadsen/oauth-pages</a>
   </footer>
 </main>
+
+<script>
+(function() {
+  // Service registry. To add a new service: add an entry here and a callback page at /<slug>/.
+  const services = [
+    {
+      name: 'Strava',
+      slug: 'strava',
+      authorizeUrl: 'https://www.strava.com/oauth/authorize',
+      clientId: '234523',
+      scope: 'read,activity:read_all',
+      // Strava-specific: approval_prompt=force shows the consent screen even if already authorized
+      extraParams: { approval_prompt: 'force' },
+      description: 'Read all activities + profile',
+    },
+    {
+      name: 'Schwab',
+      slug: 'schwab',
+      authorizeUrl: 'https://api.schwabapi.com/v1/oauth/authorize',
+      clientId: 'PENDING',  // update once Schwab approval lands
+      scope: 'readonly',
+      extraParams: {},
+      description: 'Read-only account access (pending Schwab approval)',
+      disabled: true,
+    },
+  ];
+
+  function buildAuthUrl(svc) {
+    const redirectUri = window.location.origin + '/' + svc.slug;
+    const params = new URLSearchParams({
+      client_id: svc.clientId,
+      response_type: 'code',
+      redirect_uri: redirectUri,
+      scope: svc.scope,
+    });
+    for (const [k, v] of Object.entries(svc.extraParams || {})) {
+      params.set(k, v);
+    }
+    return svc.authorizeUrl + '?' + params.toString();
+  }
+
+  const container = document.getElementById('services');
+  for (const svc of services) {
+    const card = document.createElement('div');
+    card.className = 'service-card' + (svc.disabled ? ' disabled' : '');
+    const url = buildAuthUrl(svc);
+
+    card.innerHTML = `
+      <div class="service-header">
+        <strong>${svc.name}</strong>
+        <span class="muted-small">${svc.description}</span>
+      </div>
+    `;
+
+    if (svc.disabled) {
+      const btn = document.createElement('div');
+      btn.className = 'btn btn-secondary';
+      btn.textContent = 'Unavailable';
+      btn.style.opacity = '0.5';
+      card.appendChild(btn);
+    } else {
+      const btn = document.createElement('a');
+      btn.className = 'btn btn-primary';
+      btn.href = url;
+      btn.textContent = 'Authorize ' + svc.name;
+      card.appendChild(btn);
+    }
+
+    container.appendChild(card);
+  }
+})();
+</script>
 </body>
 </html>
