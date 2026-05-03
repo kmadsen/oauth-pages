@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="robots" content="noindex">
+<title>Strava OAuth — huangmadsen</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <h1>Strava OAuth</h1>
+  <p class="muted">Auth code captured. Send it to Aria.</p>
+
+  <div id="status" class="status">Reading auth code…</div>
+
+  <div id="code-section" style="display: none;">
+    <span class="label">Authorization code</span>
+    <div id="code-box" class="code-box"></div>
+
+    <span class="label" id="scope-label" style="display: none; margin-top: 16px;">Granted scopes</span>
+    <div id="scope-box" class="code-box" style="display: none; font-size: 13px;"></div>
+
+    <button id="copy-btn" class="btn btn-primary">Copy code</button>
+    <a href="https://t.me/" id="telegram-btn" class="btn btn-secondary">Open Telegram</a>
+
+    <details>
+      <summary>What is this?</summary>
+      <p>
+        You just authorized fitness-tools' read access to your Strava activities. This page captured
+        the one-time authorization code from the redirect URL. Copy it (or tap the Telegram button)
+        and paste to Aria so she can exchange it for an access token. The code is single-use and
+        expires in minutes.
+      </p>
+    </details>
+  </div>
+
+  <details id="full-url-details" style="display: none;">
+    <summary>Full redirect URL (for debugging)</summary>
+    <p id="full-url" style="word-break: break-all; font-family: monospace; font-size: 12px;"></p>
+  </details>
+
+  <footer>
+    <a href="/">← all callbacks</a>
+  </footer>
+</main>
+
+<script>
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const state = params.get('state');
+  const scope = params.get('scope');
+  const error = params.get('error');
+
+  const statusEl = document.getElementById('status');
+  const codeSection = document.getElementById('code-section');
+  const codeBox = document.getElementById('code-box');
+  const scopeLabel = document.getElementById('scope-label');
+  const scopeBox = document.getElementById('scope-box');
+  const copyBtn = document.getElementById('copy-btn');
+  const telegramBtn = document.getElementById('telegram-btn');
+  const fullUrlDetails = document.getElementById('full-url-details');
+  const fullUrlEl = document.getElementById('full-url');
+
+  fullUrlDetails.style.display = 'block';
+  fullUrlEl.textContent = window.location.href;
+
+  if (error) {
+    statusEl.className = 'status err';
+    statusEl.innerHTML = '<strong>OAuth error:</strong> ' + escapeHtml(error);
+    return;
+  }
+
+  if (!code) {
+    statusEl.className = 'status err';
+    statusEl.textContent = 'No auth code in URL. Did you arrive from a Strava redirect?';
+    return;
+  }
+
+  statusEl.className = 'status ok';
+  statusEl.innerHTML = '<strong>✓</strong> Got auth code. Tap below to send it.';
+
+  codeBox.textContent = code;
+  codeSection.style.display = 'block';
+
+  if (scope) {
+    scopeLabel.style.display = 'block';
+    scopeBox.style.display = 'block';
+    scopeBox.textContent = scope;
+  }
+
+  // Try to clear the URL bar
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  copyBtn.addEventListener('click', async function() {
+    try {
+      await navigator.clipboard.writeText(code);
+      copyBtn.textContent = '✓ Copied';
+      copyBtn.classList.add('copied');
+      setTimeout(function() {
+        copyBtn.textContent = 'Copy code';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    } catch (e) {
+      const range = document.createRange();
+      range.selectNodeContents(codeBox);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      copyBtn.textContent = 'Long-press code to copy';
+    }
+  });
+
+  telegramBtn.href = 'https://t.me/';
+
+  function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+})();
+</script>
+</body>
+</html>

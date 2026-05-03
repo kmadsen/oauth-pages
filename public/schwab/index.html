@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0a0a0a">
+<meta name="robots" content="noindex">
+<title>Schwab OAuth — huangmadsen</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <h1>Schwab OAuth</h1>
+  <p class="muted">Auth code captured. Send it to Aria.</p>
+
+  <div id="status" class="status">Reading auth code…</div>
+
+  <div id="code-section" style="display: none;">
+    <span class="label">Authorization code</span>
+    <div id="code-box" class="code-box"></div>
+
+    <button id="copy-btn" class="btn btn-primary">Copy code</button>
+    <a href="https://t.me/" id="telegram-btn" class="btn btn-secondary">Open Telegram</a>
+
+    <details>
+      <summary>What is this?</summary>
+      <p>
+        You just authorized stockpot's read-only access to your Schwab account. This page captured
+        the one-time authorization code from the redirect URL. Copy it (or tap the Telegram button)
+        and paste to Aria so she can exchange it for an access token. The code is single-use and
+        expires in a few minutes — there is no value in storing or sharing it elsewhere.
+      </p>
+    </details>
+  </div>
+
+  <details id="full-url-details" style="display: none;">
+    <summary>Full redirect URL (for debugging)</summary>
+    <p id="full-url" style="word-break: break-all; font-family: monospace; font-size: 12px;"></p>
+  </details>
+
+  <footer>
+    <a href="/">← all callbacks</a>
+  </footer>
+</main>
+
+<script>
+(function() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get('code');
+  const state = params.get('state');
+  const error = params.get('error');
+  const errorDesc = params.get('error_description');
+
+  const statusEl = document.getElementById('status');
+  const codeSection = document.getElementById('code-section');
+  const codeBox = document.getElementById('code-box');
+  const copyBtn = document.getElementById('copy-btn');
+  const telegramBtn = document.getElementById('telegram-btn');
+  const fullUrlDetails = document.getElementById('full-url-details');
+  const fullUrlEl = document.getElementById('full-url');
+
+  fullUrlDetails.style.display = 'block';
+  fullUrlEl.textContent = window.location.href;
+
+  if (error) {
+    statusEl.className = 'status err';
+    statusEl.innerHTML = '<strong>OAuth error:</strong> ' + escapeHtml(error) +
+      (errorDesc ? '<br><small>' + escapeHtml(errorDesc) + '</small>' : '');
+    return;
+  }
+
+  if (!code) {
+    statusEl.className = 'status err';
+    statusEl.textContent = 'No auth code in URL. Did you arrive here from a Schwab redirect?';
+    return;
+  }
+
+  statusEl.className = 'status ok';
+  statusEl.innerHTML = '<strong>✓</strong> Got auth code. Tap below to send it.';
+
+  codeBox.textContent = code;
+  codeSection.style.display = 'block';
+
+  // Try to clear the URL bar so the code doesn't sit in browser history
+  if (window.history && window.history.replaceState) {
+    window.history.replaceState({}, document.title, window.location.pathname);
+  }
+
+  // Copy button
+  copyBtn.addEventListener('click', async function() {
+    try {
+      await navigator.clipboard.writeText(code);
+      copyBtn.textContent = '✓ Copied';
+      copyBtn.classList.add('copied');
+      setTimeout(function() {
+        copyBtn.textContent = 'Copy code';
+        copyBtn.classList.remove('copied');
+      }, 2000);
+    } catch (e) {
+      // Fallback: select the code box
+      const range = document.createRange();
+      range.selectNodeContents(codeBox);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+      copyBtn.textContent = 'Long-press code to copy';
+    }
+  });
+
+  // Telegram link — adjust to your chat once we know the bot username or chat URL
+  // For now, just opens Telegram. User pastes manually.
+  telegramBtn.href = 'https://t.me/';
+
+  function escapeHtml(s) {
+    const div = document.createElement('div');
+    div.textContent = s;
+    return div.innerHTML;
+  }
+})();
+</script>
+</body>
+</html>

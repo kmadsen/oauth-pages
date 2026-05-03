@@ -1,0 +1,147 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  background: #0a0a0a;
+  color: #f0f0f0;
+  min-height: 100vh;
+}
+
+body {
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+main {
+  width: 100%;
+  max-width: 560px;
+  margin-top: 32px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.muted {
+  color: #888;
+  font-size: 14px;
+  margin-bottom: 32px;
+}
+
+.status {
+  padding: 16px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  font-size: 15px;
+}
+
+.status.ok {
+  background: rgba(40, 167, 69, 0.15);
+  border: 1px solid rgba(40, 167, 69, 0.4);
+}
+
+.status.err {
+  background: rgba(220, 53, 69, 0.15);
+  border: 1px solid rgba(220, 53, 69, 0.4);
+}
+
+.code-box {
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  padding: 20px 16px;
+  margin-bottom: 16px;
+  word-break: break-all;
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 15px;
+  line-height: 1.5;
+  user-select: all;
+}
+
+.label {
+  display: block;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #888;
+  margin-bottom: 8px;
+}
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 16px;
+  margin-bottom: 12px;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  text-align: center;
+  font-family: inherit;
+}
+
+.btn-primary {
+  background: #2a7fff;
+  color: white;
+}
+
+.btn-primary:active {
+  background: #1f5fcc;
+}
+
+.btn-secondary {
+  background: #1f1f1f;
+  color: #f0f0f0;
+  border: 1px solid #2a2a2a;
+}
+
+.btn-secondary:active {
+  background: #2a2a2a;
+}
+
+.btn.copied {
+  background: #28a745;
+}
+
+footer {
+  margin-top: 48px;
+  font-size: 13px;
+  color: #666;
+  text-align: center;
+}
+
+footer a {
+  color: #888;
+}
+
+details {
+  margin-top: 24px;
+  padding: 12px 16px;
+  background: #161616;
+  border-radius: 12px;
+  border: 1px solid #2a2a2a;
+}
+
+details summary {
+  cursor: pointer;
+  font-size: 14px;
+  color: #888;
+}
+
+details p {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #aaa;
+  line-height: 1.6;
+}
