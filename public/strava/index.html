@@ -11,27 +11,25 @@
 <body>
 <main>
   <h1>Strava OAuth</h1>
-  <p class="muted">Auth code captured. Send it to Aria.</p>
+  <p class="muted">Auth code captured. Send the JSON blob to Aria.</p>
 
   <div id="status" class="status">Reading auth code…</div>
 
-  <div id="code-section" style="display: none;">
-    <span class="label">Authorization code</span>
-    <div id="code-box" class="code-box"></div>
+  <div id="payload-section" style="display: none;">
+    <span class="label">Payload (copy this whole thing)</span>
+    <pre id="payload-box" class="code-box"></pre>
 
-    <span class="label" id="scope-label" style="display: none; margin-top: 16px;">Granted scopes</span>
-    <div id="scope-box" class="code-box" style="display: none; font-size: 13px;"></div>
-
-    <button id="copy-btn" class="btn btn-primary">Copy code</button>
+    <button id="copy-btn" class="btn btn-primary">Copy payload</button>
     <a href="https://t.me/" id="telegram-btn" class="btn btn-secondary">Open Telegram</a>
 
     <details>
       <summary>What is this?</summary>
       <p>
         You just authorized fitness-tools' read access to your Strava activities. This page captured
-        the one-time authorization code from the redirect URL. Copy it (or tap the Telegram button)
-        and paste to Aria so she can exchange it for an access token. The code is single-use and
-        expires in minutes.
+        the one-time authorization code from the redirect URL and packaged it into a JSON payload
+        with the granted scopes and a timestamp. Copy the payload and paste to Aria so she can
+        exchange it for an access token. The code is single-use and expires in minutes — there's
+        no value in storing it elsewhere.
       </p>
     </details>
   </div>
@@ -55,10 +53,8 @@
   const error = params.get('error');
 
   const statusEl = document.getElementById('status');
-  const codeSection = document.getElementById('code-section');
-  const codeBox = document.getElementById('code-box');
-  const scopeLabel = document.getElementById('scope-label');
-  const scopeBox = document.getElementById('scope-box');
+  const payloadSection = document.getElementById('payload-section');
+  const payloadBox = document.getElementById('payload-box');
   const copyBtn = document.getElementById('copy-btn');
   const telegramBtn = document.getElementById('telegram-btn');
   const fullUrlDetails = document.getElementById('full-url-details');
@@ -79,39 +75,45 @@
     return;
   }
 
+  // Build the payload Aria can consume directly
+  const payload = {
+    service: 'strava',
+    code: code,
+    scopes: scope ? scope.split(',').map(s => s.trim()) : [],
+    state: state || null,
+    captured_at: new Date().toISOString(),
+  };
+
+  const payloadJson = JSON.stringify(payload, null, 2);
+
   statusEl.className = 'status ok';
-  statusEl.innerHTML = '<strong>✓</strong> Got auth code. Tap below to send it.';
+  statusEl.innerHTML = '<strong>✓</strong> Got auth code + scopes. Tap below to copy and send.';
 
-  codeBox.textContent = code;
-  codeSection.style.display = 'block';
+  payloadBox.textContent = payloadJson;
+  payloadSection.style.display = 'block';
 
-  if (scope) {
-    scopeLabel.style.display = 'block';
-    scopeBox.style.display = 'block';
-    scopeBox.textContent = scope;
-  }
-
-  // Try to clear the URL bar
+  // Try to clear the URL bar so the code doesn't sit in browser history
   if (window.history && window.history.replaceState) {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
+  // Copy button
   copyBtn.addEventListener('click', async function() {
     try {
-      await navigator.clipboard.writeText(code);
-      copyBtn.textContent = '✓ Copied';
+      await navigator.clipboard.writeText(payloadJson);
+      copyBtn.textContent = '✓ Copied JSON';
       copyBtn.classList.add('copied');
       setTimeout(function() {
-        copyBtn.textContent = 'Copy code';
+        copyBtn.textContent = 'Copy payload';
         copyBtn.classList.remove('copied');
       }, 2000);
     } catch (e) {
       const range = document.createRange();
-      range.selectNodeContents(codeBox);
+      range.selectNodeContents(payloadBox);
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-      copyBtn.textContent = 'Long-press code to copy';
+      copyBtn.textContent = 'Long-press to copy';
     }
   });
 

@@ -11,24 +11,24 @@
 <body>
 <main>
   <h1>Schwab OAuth</h1>
-  <p class="muted">Auth code captured. Send it to Aria.</p>
+  <p class="muted">Auth code captured. Send the JSON blob to Aria.</p>
 
   <div id="status" class="status">Reading auth code…</div>
 
-  <div id="code-section" style="display: none;">
-    <span class="label">Authorization code</span>
-    <div id="code-box" class="code-box"></div>
+  <div id="payload-section" style="display: none;">
+    <span class="label">Payload (copy this whole thing)</span>
+    <pre id="payload-box" class="code-box"></pre>
 
-    <button id="copy-btn" class="btn btn-primary">Copy code</button>
+    <button id="copy-btn" class="btn btn-primary">Copy payload</button>
     <a href="https://t.me/" id="telegram-btn" class="btn btn-secondary">Open Telegram</a>
 
     <details>
       <summary>What is this?</summary>
       <p>
         You just authorized stockpot's read-only access to your Schwab account. This page captured
-        the one-time authorization code from the redirect URL. Copy it (or tap the Telegram button)
-        and paste to Aria so she can exchange it for an access token. The code is single-use and
-        expires in a few minutes — there is no value in storing or sharing it elsewhere.
+        the one-time authorization code from the redirect URL and packaged it into a JSON payload
+        with the session token and a timestamp. Copy the payload and paste to Aria so she can
+        exchange it for an access token. The code is single-use and expires in a few minutes.
       </p>
     </details>
   </div>
@@ -47,13 +47,14 @@
 (function() {
   const params = new URLSearchParams(window.location.search);
   const code = params.get('code');
+  const session = params.get('session');
   const state = params.get('state');
   const error = params.get('error');
   const errorDesc = params.get('error_description');
 
   const statusEl = document.getElementById('status');
-  const codeSection = document.getElementById('code-section');
-  const codeBox = document.getElementById('code-box');
+  const payloadSection = document.getElementById('payload-section');
+  const payloadBox = document.getElementById('payload-box');
   const copyBtn = document.getElementById('copy-btn');
   const telegramBtn = document.getElementById('telegram-btn');
   const fullUrlDetails = document.getElementById('full-url-details');
@@ -75,40 +76,45 @@
     return;
   }
 
+  const payload = {
+    service: 'schwab',
+    code: code,
+    session: session || null,
+    state: state || null,
+    captured_at: new Date().toISOString(),
+  };
+
+  const payloadJson = JSON.stringify(payload, null, 2);
+
   statusEl.className = 'status ok';
-  statusEl.innerHTML = '<strong>✓</strong> Got auth code. Tap below to send it.';
+  statusEl.innerHTML = '<strong>✓</strong> Got auth code. Tap below to copy and send.';
 
-  codeBox.textContent = code;
-  codeSection.style.display = 'block';
+  payloadBox.textContent = payloadJson;
+  payloadSection.style.display = 'block';
 
-  // Try to clear the URL bar so the code doesn't sit in browser history
   if (window.history && window.history.replaceState) {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 
-  // Copy button
   copyBtn.addEventListener('click', async function() {
     try {
-      await navigator.clipboard.writeText(code);
-      copyBtn.textContent = '✓ Copied';
+      await navigator.clipboard.writeText(payloadJson);
+      copyBtn.textContent = '✓ Copied JSON';
       copyBtn.classList.add('copied');
       setTimeout(function() {
-        copyBtn.textContent = 'Copy code';
+        copyBtn.textContent = 'Copy payload';
         copyBtn.classList.remove('copied');
       }, 2000);
     } catch (e) {
-      // Fallback: select the code box
       const range = document.createRange();
-      range.selectNodeContents(codeBox);
+      range.selectNodeContents(payloadBox);
       const sel = window.getSelection();
       sel.removeAllRanges();
       sel.addRange(range);
-      copyBtn.textContent = 'Long-press code to copy';
+      copyBtn.textContent = 'Long-press to copy';
     }
   });
 
-  // Telegram link — adjust to your chat once we know the bot username or chat URL
-  // For now, just opens Telegram. User pastes manually.
   telegramBtn.href = 'https://t.me/';
 
   function escapeHtml(s) {
