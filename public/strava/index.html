@@ -20,7 +20,6 @@
     <pre id="payload-box" class="code-box"></pre>
 
     <button id="copy-btn" class="btn btn-primary">Copy payload</button>
-    <a href="https://t.me/" id="telegram-btn" class="btn btn-secondary">Open Telegram</a>
 
     <details>
       <summary>What is this?</summary>
@@ -56,7 +55,6 @@
   const payloadSection = document.getElementById('payload-section');
   const payloadBox = document.getElementById('payload-box');
   const copyBtn = document.getElementById('copy-btn');
-  const telegramBtn = document.getElementById('telegram-btn');
   const fullUrlDetails = document.getElementById('full-url-details');
   const fullUrlEl = document.getElementById('full-url');
 
@@ -116,8 +114,6 @@
       copyBtn.textContent = 'Long-press to copy';
     }
   });
-
-  telegramBtn.href = 'https://t.me/';
 
   function escapeHtml(s) {
     const div = document.createElement('div');

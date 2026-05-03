@@ -114,6 +114,38 @@ h1 {
   background: #28a745;
 }
 
+.service-card {
+  padding: 20px 16px;
+  background: #161616;
+  border: 1px solid #2a2a2a;
+  border-radius: 12px;
+  margin-bottom: 12px;
+}
+
+.service-card.disabled {
+  opacity: 0.6;
+}
+
+.service-header {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.service-header strong {
+  font-size: 17px;
+}
+
+.muted-small {
+  font-size: 13px;
+  color: #888;
+}
+
+.service-card .btn {
+  margin-bottom: 0;
+}
+
 footer {
   margin-top: 48px;
   font-size: 13px;
