@@ -1,0 +1,40 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Stockpot">
+  <defs>
+    <linearGradient id="pot" x1="0" y1="140" x2="0" y2="474" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#41E08C"/>
+      <stop offset="1" stop-color="#1F9E5E"/>
+    </linearGradient>
+    <linearGradient id="line" x1="136" y1="112" x2="390" y2="286" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#7EFFB7"/>
+      <stop offset="1" stop-color="#35D27D"/>
+    </linearGradient>
+  </defs>
+
+  <!-- chart candles, seated on the pot rim so they read as a chart, not sprouts -->
+  <g fill="#2FC579" stroke="#2FC579">
+    <line x1="178" y1="238" x2="178" y2="323" stroke-width="7" stroke-linecap="round"/>
+    <rect x="155" y="257" width="46" height="59" rx="6"/>
+
+    <line x1="256" y1="202" x2="256" y2="323" stroke-width="7" stroke-linecap="round"/>
+    <rect x="233" y="222" width="46" height="94" rx="6"/>
+
+    <line x1="334" y1="166" x2="334" y2="323" stroke-width="7" stroke-linecap="round"/>
+    <rect x="311" y="187" width="46" height="129" rx="6"/>
+  </g>
+
+  <!-- trendline touches the candle highs and exits cleanly above the pot -->
+  <path d="M142 279 L178 239 L256 204 L334 168 L386 112"
+        stroke="url(#line)" stroke-width="16" fill="none"
+        stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M352 112 L396 101 L389 146 Z" fill="#7EFFB7"/>
+
+  <!-- flat cooking-pot rim doubles as the chart baseline -->
+  <rect x="124" y="318" width="264" height="38" rx="17" fill="url(#pot)"/>
+
+  <!-- side handles: simple loop shapes, not curled planter handles -->
+  <path d="M129 327 C94 327 75 346 78 370 C81 394 108 405 137 386 L126 365 C112 373 100 370 98 358 C96 347 107 340 129 340 Z" fill="url(#pot)"/>
+  <path d="M383 327 C418 327 437 346 434 370 C431 394 404 405 375 386 L386 365 C400 373 412 370 414 358 C416 347 405 340 383 340 Z" fill="url(#pot)"/>
+
+  <!-- pot body with a wide shoulder and rounded base -->
+  <path d="M151 354 H361 L344 437 C339 461 318 476 293 476 H219 C194 476 173 461 168 437 Z" fill="url(#pot)"/>
+</svg>
