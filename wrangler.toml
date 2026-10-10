@@ -1,0 +1,24 @@
+name = "oauth-pages"
+main = "oauth-worker/index.js"
+compatibility_date = "2026-08-21"
+
+routes = [
+  { pattern = "oauth.huangmadsen.com/oauth/schwab/*", zone_name = "huangmadsen.com" },
+  { pattern = "oauth.huangmadsen.com/schwab", zone_name = "huangmadsen.com" },
+  { pattern = "oauth.huangmadsen.com/api/schwab/*", zone_name = "huangmadsen.com" }
+]
+
+[vars]
+SCHWAB_REDIRECT_URI = "https://oauth.huangmadsen.com/schwab"
+SCHWAB_AUTH_BASE_URL = "https://api.schwabapi.com/v1"
+
+[[durable_objects.bindings]]
+name = "SCHWAB_TOKEN_STORE"
+class_name = "SchwabTokenStore"
+
+[[migrations]]
+tag = "v1"
+new_classes = ["SchwabTokenStore"]
+
+[triggers]
+crons = ["*/20 13-21 * * 1-5"]
