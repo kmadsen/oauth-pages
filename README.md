@@ -1,9 +1,9 @@
 # oauth-pages
 
-Static OAuth landing site, served from `https://oauth.huangmadsen.com/`.
+OAuth landing site, served from `https://oauth.huangmadsen.com/`.
 
-A bookmarkable phone-friendly home page for **starting** OAuth flows, plus
-per-service callback pages that capture the auth code as a JSON payload.
+A bookmarkable phone-friendly home page for **starting** OAuth flows, plus a
+Cloudflare Worker backend for Schwab's short-lived auth-code callback.
 
 ## What's here
 
@@ -11,10 +11,12 @@ per-service callback pages that capture the auth code as a JSON payload.
 oauth-pages/
 ├── public/
 │   ├── index.html          # launch page: "Authorize Strava" / "Authorize Schwab" buttons
-│   ├── schwab/index.html   # Schwab callback handler — captures code as JSON payload
 │   ├── strava/index.html   # Strava callback handler — same pattern
 │   ├── style.css
 │   └── _headers            # Cloudflare Pages security headers (CSP, no-referrer, etc.)
+├── oauth-worker/
+│   └── index.js            # Schwab server-side exchange + token sync backend
+├── wrangler.toml           # Worker routes, Durable Object binding, cron trigger
 ├── .gitignore
 └── README.md
 ```
@@ -24,14 +26,16 @@ oauth-pages/
 ### Starting an OAuth flow (`/`)
 
 The launch page reads a JS service registry (in `public/index.html`) and renders an
-"Authorize" button per service. Each button builds the provider's authorize URL
-client-side using `client_id`, `scope`, and `redirect_uri = https://oauth.huangmadsen.com/<slug>`.
+"Authorize" button per service. Strava still builds the provider URL client-side.
+Schwab now starts at `/oauth/schwab/start`, which is served by the Worker so it can
+mint a one-time state nonce before redirecting to Schwab.
 
 Bookmark the launch page on your phone home screen for one-tap re-auth.
 
 ### Capturing the callback (`/<service>`)
 
-After the provider redirects back with `?code=...&scope=...`:
+Strava still uses the static callback page. After Strava redirects back with
+`?code=...&scope=...`:
 
 1. The page parses the URL params
 2. Builds a JSON payload combining the code, scopes, state, and a capture timestamp
@@ -51,27 +55,34 @@ The JSON payload format is:
 }
 ```
 
-(Schwab callback payload uses `session` instead of `scopes` since Schwab's redirect carries
-a session token rather than scope strings.)
-
 You paste the JSON to the agent (Aria) on the other end, and she runs the
 authorization-code → tokens exchange on a host that has the client secret.
 
+Schwab does not use that static callback anymore. Schwab redirects to `/schwab`;
+the Worker validates the one-time state and exchanges the code with Schwab in the
+same request, then stores the encrypted token bundle in a Durable Object.
+Stockpot pulls the token bundle outbound with:
+
+```bash
+python -m stockpot.portfolio auth sync
+```
+
 ## Security model
 
-- **No secrets in this repo.** Pure static HTML/CSS/JS. Public is fine.
-- **Auth code is single-use, ~5 min lifetime.** It only matters when paired with the
-  client secret, which never lives on this site.
+- **No secrets in this repo.** Worker secrets live only in Cloudflare.
+- **Schwab auth codes are never rendered to the browser or sent over chat.** They are
+  exchanged server-side immediately because Schwab has been observed expiring codes in
+  under a minute.
+- **Schwab tokens are encrypted at rest** in the Worker Durable Object with `TOKEN_ENC_KEY`.
+- **Stockpot sync is outbound-only** from Kyle's machine and protected by Cloudflare
+  Access service-token headers.
 - `_headers` sets:
   - `Content-Security-Policy` (no third-party scripts/connects)
   - `Referrer-Policy: no-referrer` (code can't leak via Referer)
   - `X-Frame-Options: DENY`
   - `X-Content-Type-Options: nosniff`
 - Pages have `<meta name="robots" content="noindex">`.
-- Auth code is removed from URL bar via `history.replaceState` after capture.
-- The "exchange code for tokens" step happens off-site (currently on Kyle's laptop with
-  secrets in `~/.openclaw/credentials/`). Future option: a Cloudflare Worker holding
-  the client secret in env vars and storing tokens in Cloudflare KV.
+- Strava auth code is removed from URL bar via `history.replaceState` after capture.
 
 ## Adding a new service
 
@@ -111,7 +122,7 @@ authorization-code → tokens exchange on a host that has the client secret.
 | Service | Slug | Status |
 |---|---|---|
 | Strava | `/strava` | ✅ Live (client_id `234523`, scopes `read,activity:read_all`) |
-| Schwab | `/schwab` | ⏳ Disabled on launch page until callback URI approval lands (Schwab's manual review) |
+| Schwab | `/schwab` | Worker-backed callback; Stockpot sync endpoint at `/api/schwab/token` |
 
 ## Hosting
 
@@ -126,9 +137,12 @@ authorization-code → tokens exchange on a host that has the client secret.
 cd public && python3 -m http.server 8080
 # open http://localhost:8080/
 # open http://localhost:8080/strava/?code=test123&scope=read,activity:read_all
+npm install
+npm run dev:worker
 ```
 
-The page is identical locally and in production — pure client-side JS.
+The static Strava page is identical locally and in production. Schwab requires the
+Worker routes plus Cloudflare secrets/bindings.
 
 ## Related
 

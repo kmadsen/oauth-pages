@@ -1,0 +1,13 @@
+{
+  "name": "oauth-pages",
+  "version": "0.1.0",
+  "private": true,
+  "description": "OAuth launch pages and Cloudflare Worker callback backend.",
+  "scripts": {
+    "deploy:worker": "wrangler deploy",
+    "dev:worker": "wrangler dev"
+  },
+  "devDependencies": {
+    "wrangler": "^4.125.0"
+  }
+}
